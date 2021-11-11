@@ -1,3 +1,10 @@
+"""
+Borrowed from
+https://forum.digikey.com/t/getting-started-with-the-ti-awr1642-mmwave-sensor/13445
+
+Using this to connect to the Ti mmWave Module and retrieve the data
+"""
+
 import struct
 import time
 from multiprocessing import Queue
