@@ -102,13 +102,49 @@ class TrackedObjects(TLVData):
         return descriptor, stripped_tlv
 
 
-# Map type ID to the corresponding class
+class RangeProfile(TLVData):
+    pass
+
+
+class NoiseFloorProfile(TLVData):
+    pass
+
+
+class AzimuthStaticHeatmap(TLVData):
+    pass
+
+
+class RangeDopplerHeatmap(TLVData):
+    pass
+
+
+class Stats(TLVData):
+    pass
+
+
+class DetectedPointsSide(TLVData):
+    pass
+
+
+class AzimuthElevationHeatmap(TLVData):
+    pass
+
+
+class TemperatureStats(TLVData):
+    pass
+
+
 TLV_TYPES = {
-    # Obstacle detection
+    # Map type ID to the corresponding class
     1: DetectedPoints,
-    2: ClusteringResults,
-    3: TrackedObjects,
-    # Custom
+    2: RangeProfile,
+    3: NoiseFloorProfile,
+    4: AzimuthStaticHeatmap,
+    5: RangeDopplerHeatmap,
+    6: Stats,
+    7: DetectedPointsSide,
+    8: AzimuthElevationHeatmap,
+    9: TemperatureStats,
 }
 
 

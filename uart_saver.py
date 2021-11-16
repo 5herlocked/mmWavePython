@@ -12,6 +12,7 @@ from threading import Thread
 import numpy as np
 
 # Use the correct frame format for the firmware
+# from NavPlot import NavPlot
 from frame import Frame, ShortRangeRadarFrameHeader, FrameError
 from serial_interface import SerialInterface
 
@@ -19,74 +20,34 @@ from serial_interface import SerialInterface
 radar_bounds = (-10, 10, -1, 10)
 
 
-def generate_new_destination():
-    dist = 0
-    new_x = 0
-    new_y = 0
-    while dist < 2:
-        new_x = np.random.randint(radar_bounds[0], radar_bounds[1], dtype=np.int8)
-        new_y = np.random.randint(0, radar_bounds[3], dtype=np.int8)
-
-        dist = np.sqrt(np.power(new_x, 2) + np.power(new_y, 2))
-
-    return new_x, new_y
-
-
-def randomize_destination(last_time, period, serial_inst):
-    now = time.time()
-    if now - last_time > period:
-        x, y = generate_new_destination()
-        # send_destination(serial_inst, x, y)
-        return now
-    else:
-        return last_time
-
-
 def process_frame(serial_inst, plot_queue):
     # Get a frame from the data queue and parse
     last_dest_update = 0
     while serial_inst.uarts_enable:
-        # Update to a new random destination every 15 seconds
-        last_dest_update = randomize_destination(last_dest_update, 15, serial_inst)
-
         serial_frame = serial_inst.recv_item(serial_inst.data_rx_queue)
         if serial_frame:
             try:
                 frame = Frame(serial_frame, frame_type=serial_inst.frame_type)
                 results = dict()
 
+                print(frame)
+
                 # Frames that don't contain the parking assist data only have 1-2 points
                 # Plotting them makes the graph run choppily so just ignore them
-                if 'PARKING_ASSIST' in [tlv.name for tlv in frame.tlvs]:
-                    # There can be at most one of each type of TLV in the frame
-                    for tlv in frame.tlvs:
-                        objs = tlv.objects
-
-                        if tlv.name == 'DETECTED_POINTS':
-                            tuples = [(float(obj.x), float(obj.y)) for obj in objs]
-                            coords = np.array(tuples) / 2 ** tlv.descriptor.xyzQFormat
-                            results['DETECTED_POINTS'] = coords
-
-                        elif tlv.name == 'CLUSTERING_RESULTS':
-                            tuples = [(float(obj.xCenter), float(obj.xSize),
-                                       float(obj.yCenter), float(obj.ySize)) for obj in objs]
-                            data = np.array(tuples) / 2 ** tlv.descriptor.xyzQFormat
-                            data = np.around(data, 3)
-                            results['CLUSTERING_RESULTS'] = data
-
-                        elif tlv.name == 'BEST_PATH':
-                            tuples = [(obj.x, obj.y) for obj in objs]
-                            # For plotting, offset path by 0.5 so it plots the points in the center of each 1m block
-                            path = np.array(tuples) + 0.5
-                            if path.size == 0:
-                                results['BEST_PATH'] = np.array([[0, 0]])
-                            else:
-                                results['BEST_PATH'] = path
-
-                    plot_queue.put(results)
+                # if 'PARKING_ASSIST' in [tlv.name for tlv in frame.tlvs]:
+                #     # There can be at most one of each type of TLV in the frame
+                #     for tlv in frame.tlvs:
+                #         objs = tlv.objects
+                #
+                #         if tlv.name == 'DETECTED_POINTS':
+                #             tuples = [(float(obj.x), float(obj.y)) for obj in objs]
+                #             coords = np.array(tuples) / 2 ** tlv.descriptor.xyzQFormat
+                #             results['DETECTED_POINTS'] = coords
+                #
+                #     plot_queue.put(results)
             except (KeyError, struct.error, IndexError, FrameError, OverflowError) as e:
                 # Some data got in the wrong place, just skip the frame
-                print('Exception occured: ', e)
+                print('Exception occurred: ', e)
                 print("Skipping frame due to error...")
 
         # Sleep to allow other threads to run
@@ -99,6 +60,17 @@ def run_demo(control_port, data_port, reconfig=False):
     interface = SerialInterface(control_port, data_port, frame_type=ShortRangeRadarFrameHeader)
     interface.start()
 
+    lines_of_file = ""
+
+    with open('profile.cfg') as f:
+        lines_of_file = f.readlines()
+
+    for line in lines_of_file:
+        if line.startswith('%'):
+            continue
+        else:
+            interface.send_item(interface.control_tx_queue, line)
+
     # Write configs to device and start the sensor
     if reconfig:
         print("Sending configuration command...")
@@ -109,12 +81,13 @@ def run_demo(control_port, data_port, reconfig=False):
         interface.send_item(interface.control_tx_queue, 'sensorStart\n')
 
     # Create queues that will be used to transfer data between processes
-    radar2plot_queue = Queue()
+    # radar2plot_queue = Queue()
 
+    process_frame(interface, Queue())
     # Create a thread to parse the frames
     # Sends data to both the plot and the robot
-    processing_thread = Thread(target=process_frame, args=(interface, radar2plot_queue,))
-    processing_thread.start()
+    # processing_thread = Thread(target=process_frame, args=(interface, radar2plot_queue,))
+    # processing_thread.start()
 
     # Plot instance
     # Receives data from the processing and robot threads
@@ -126,7 +99,7 @@ def run_demo(control_port, data_port, reconfig=False):
 
     interface.send_item(interface.control_tx_queue, 'sensorStop\n')
     interface.stop()
-    processing_thread.join()
+    # processing_thread.join()
 
 
 if __name__ == "__main__":
