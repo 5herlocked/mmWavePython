@@ -60,16 +60,12 @@ def run_demo(control_port, data_port, reconfig=False):
     interface = SerialInterface(control_port, data_port, frame_type=ShortRangeRadarFrameHeader)
     interface.start()
 
-    lines_of_file = ""
-
     with open('profile.cfg') as f:
-        lines_of_file = f.readlines()
-
-    for line in lines_of_file:
-        if line.startswith('%'):
-            continue
-        else:
-            interface.send_item(interface.control_tx_queue, line)
+        for line in f.readlines():
+            if line.startswith('%'):
+                continue
+            else:
+                interface.send_item(interface.control_tx_queue, line)
 
     # Write configs to device and start the sensor
     if reconfig:
