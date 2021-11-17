@@ -39,98 +39,89 @@ class DataObjDescriptor:
 
 class DetectedPoints(TLVData):
     NAME = 'DETECTED_POINTS'
-    SIZE_BYTES = 8
+    SIZE_BYTES = 16
 
     def __init__(self, serial_tlv):
         super(DetectedPoints, self).__init__(serial_tlv)
         # Unpack elements from the structure
-        elements = struct.unpack('<hHhh', serial_tlv)
-        self.speedIdx = elements[0]
-        self.peakVal = elements[1]
-        self.x = elements[2]
-        self.y = elements[3]
-
-    @staticmethod
-    def preparsing(serial_tlv):
-        # Strip off the 4 byte description header
-        descriptor = DataObjDescriptor(serial_tlv[0:4])
-        stripped_tlv = serial_tlv[4:]
-        return descriptor, stripped_tlv
-
-
-class ClusteringResults(TLVData):
-    NAME = 'CLUSTERING_RESULTS'
-    SIZE_BYTES = 8
-
-    def __init__(self, serial_tlv):
-        super(ClusteringResults, self).__init__(serial_tlv)
-        # Unpack elements from the structure
-        elements = struct.unpack('<4h', serial_tlv)
-        self.xCenter = elements[0]
-        self.yCenter = elements[1]
-        self.xSize = elements[2]
-        self.ySize = elements[3]
-
-    @staticmethod
-    def preparsing(serial_tlv):
-        # Strip off the 4 byte description header
-        descriptor = DataObjDescriptor(serial_tlv[0:4])
-        stripped_tlv = serial_tlv[4:]
-        return descriptor, stripped_tlv
-
-
-class TrackedObjects(TLVData):
-    NAME = 'TRACKED_OBJECTS'
-    SIZE_BYTES = 12
-
-    def __init__(self, serial_tlv):
-        super(TrackedObjects, self).__init__(serial_tlv)
-        # Unpack elements from the structure
-        elements = struct.unpack('<6h', serial_tlv)
+        elements = struct.unpack('<ffff', serial_tlv)
         self.x = elements[0]
         self.y = elements[1]
-        self.xd = elements[2]
-        self.yd = elements[3]
-        self.xsize = elements[4]
-        self.ysize = elements[5]
-
-    @staticmethod
-    def preparsing(serial_tlv):
-        # Strip off the 4 byte description header
-        descriptor = DataObjDescriptor(serial_tlv[0:4])
-        stripped_tlv = serial_tlv[4:]
-        return descriptor, stripped_tlv
+        self.z = elements[2]
+        self.doppler = elements[3]
 
 
 class RangeProfile(TLVData):
+    NAME = 'RANGE_PROFILE'
+    SIZE_BYTES = 2
+
+    def __init__(self, serial_tlv):
+        super(RangeProfile, self).__init__(serial_tlv)
+        # Unpack elements from the struct
+
+        elements = struct.unpack('<H', serial_tlv)
+        # self.
+
     pass
 
 
 class NoiseFloorProfile(TLVData):
+    NAME = 'NOISE_PROFILE'
+    SIZE_BYTES = 2
     pass
 
 
 class AzimuthStaticHeatmap(TLVData):
+    NAME = 'AZIMUTH_HEATMAP'
+    SIZE_BYTES = 4
     pass
 
 
 class RangeDopplerHeatmap(TLVData):
+    NAME = 'RANGE_HEATMAP'
+    SIZE_BYTES = 4
     pass
 
 
 class Stats(TLVData):
+    NAME = 'MODULE_STATS'
+    SIZE_BYTES = 24
+
+    def __init__(self, serial_tlv):
+        super(Stats, self).__init__(serial_tlv)
+        # Unpack elements from the struct
+        elements = struct.unpack('<iiii', serial_tlv)
+        self.frame_time = elements[0]
+        self.output_time = elements[1]
+        self.inter_frame_margin = elements[2]
+        self.inter_chirp_margin = elements[3]
+        self.active_cpu_load = elements[4]
+        self.inter_frame_cpu_load = elements[5]
     pass
 
 
 class DetectedPointsSide(TLVData):
+    NAME = 'SIDE_INFO_FOR_POINTS'
+    SIZE_BYTES = 4
+
+    def __init__(self, serial_tlv):
+        super(DetectedPointsSide, self).__init__(serial_tlv)
+        # Unpack elements from the struct
+        elements = struct.unpack('<HH', serial_tlv)
+        self.snr = elements[0]
+        self.noise = elements[1]
     pass
 
 
 class AzimuthElevationHeatmap(TLVData):
+    NAME = 'AZIMUTH_ELEVATION_HEATMAP'
+    SIZE_BYTES = 4
     pass
 
 
 class TemperatureStats(TLVData):
+    NAME = 'TEMPERATURE_STATS'
+    SIZE_BYTES = 28
     pass
 
 

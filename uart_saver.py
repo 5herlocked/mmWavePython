@@ -4,47 +4,62 @@ https://forum.digikey.com/t/getting-started-with-the-ti-awr1642-mmwave-sensor/13
 
 Using this to brute force save all data from the UART ports
 """
+import signal
 import struct
 import time
-from multiprocessing import Queue
-from threading import Thread
-
-import numpy as np
+import json
+from datetime import datetime
 
 # Use the correct frame format for the firmware
-# from NavPlot import NavPlot
 from frame import Frame, ShortRangeRadarFrameHeader, FrameError
 from serial_interface import SerialInterface
 
-# The SRR firmware is configured for ~20m range with 120 degree viewing angle, about half range should be fine
-radar_bounds = (-10, 10, -1, 10)
+
+def save_data():
+    global frames, file_name
+
+    json.dump(frames, file_name)
 
 
-def process_frame(serial_inst, plot_queue):
-    # Get a frame from the data queue and parse
-    last_dest_update = 0
-    while serial_inst.uarts_enable:
-        serial_frame = serial_inst.recv_item(serial_inst.data_rx_queue)
+def interrupt_handler(sig, frame):
+    # Sig Int is called causing everything to shut down
+    print("Saving data...")
+    save_data()
+
+    print("Shutting down...")
+    interface.send_item(interface.control_tx_queue, 'sensorStop\n')
+    interface.stop()
+    time.sleep(5)
+
+
+def run():
+    # Open serial interface to the device
+    # Specify which frame/header structure to search for
+    global interface, frames
+
+    signal.signal(signal.SIGINT, interrupt_handler)
+    # interface = SerialInterface(control_port, data_port, frame_type=ShortRangeRadarFrameHeader)
+    interface.start()
+
+    with open('profile.cfg') as f:
+        print("Sending Configuration...")
+        for line in f.readlines():
+            if line.startswith('%'):
+                continue
+            else:
+                print(line)
+                interface.send_item(interface.control_tx_queue, line)
+
+    frames = []
+    start_time = datetime.now()
+    while interface.uarts_enable:
+        serial_frame = interface.recv_item(interface.data_rx_queue)
         if serial_frame:
             try:
-                frame = Frame(serial_frame, frame_type=serial_inst.frame_type)
-                results = dict()
+                frame = Frame(serial_frame, frame_type=interface.frame_type)
 
-                print(frame)
+                frames.append(((datetime.now() - start_time), frame))
 
-                # Frames that don't contain the parking assist data only have 1-2 points
-                # Plotting them makes the graph run choppily so just ignore them
-                # if 'PARKING_ASSIST' in [tlv.name for tlv in frame.tlvs]:
-                #     # There can be at most one of each type of TLV in the frame
-                #     for tlv in frame.tlvs:
-                #         objs = tlv.objects
-                #
-                #         if tlv.name == 'DETECTED_POINTS':
-                #             tuples = [(float(obj.x), float(obj.y)) for obj in objs]
-                #             coords = np.array(tuples) / 2 ** tlv.descriptor.xyzQFormat
-                #             results['DETECTED_POINTS'] = coords
-                #
-                #     plot_queue.put(results)
             except (KeyError, struct.error, IndexError, FrameError, OverflowError) as e:
                 # Some data got in the wrong place, just skip the frame
                 print('Exception occurred: ', e)
@@ -54,57 +69,23 @@ def process_frame(serial_inst, plot_queue):
         time.sleep(0.001)
 
 
-def run_demo(control_port, data_port, reconfig=False):
-    # Open serial interface to the device
-    # Specify which frame/header structure to search for
-    interface = SerialInterface(control_port, data_port, frame_type=ShortRangeRadarFrameHeader)
-    interface.start()
-
-    with open('profile.cfg') as f:
-        for line in f.readlines():
-            if line.startswith('%'):
-                continue
-            else:
-                interface.send_item(interface.control_tx_queue, line)
-
-    # Write configs to device and start the sensor
-    if reconfig:
-        print("Sending configuration command...")
-        interface.send_item(interface.control_tx_queue, 'advFrameCfg\n')
-        time.sleep(3)
-
-        print("Starting sensor...")
-        interface.send_item(interface.control_tx_queue, 'sensorStart\n')
-
-    # Create queues that will be used to transfer data between processes
-    # radar2plot_queue = Queue()
-
-    process_frame(interface, Queue())
-    # Create a thread to parse the frames
-    # Sends data to both the plot and the robot
-    # processing_thread = Thread(target=process_frame, args=(interface, radar2plot_queue,))
-    # processing_thread.start()
-
-    # Plot instance
-    # Receives data from the processing and robot threads
-    # my_plot = NavPlot(radar_bounds, radar2plot_queue)
-    # my_plot.show()
-
-    # When the plot is closed, stop all the threads and safely end the program
-    print("Shutting down...")
-
-    interface.send_item(interface.control_tx_queue, 'sensorStop\n')
-    interface.stop()
-    # processing_thread.join()
-
-
 if __name__ == "__main__":
     import argparse
 
-    parser = argparse.ArgumentParser(description='Run mmWave navigation visualization demo.')
+    parser = argparse.ArgumentParser(description='Run mmWave record of the data received')
+    parser.add_help = True
     parser.add_argument('control_port', help='COM port for configuration, control')
     parser.add_argument('data_port', help='COM port for radar data transfer')
-    parser.add_argument('--reconfig', help='Send configuration settings to radar', action='store_true')
+    parser.add_argument('output_name', help='Name of the output file')
     args = parser.parse_args()
 
-    run_demo(args.control_port, args.data_port, args.reconfig)
+    # Program Globals
+    interface = SerialInterface(args.control_port, args.data_port, frame_type=ShortRangeRadarFrameHeader)
+    frames = list()
+
+    if args.output_name is not None:
+        file_name = args.output_name + ".json"
+    else:
+        file_name = datetime.now().strftime('%Y_%m_%d-%H-%M-%S') + ".json"
+
+    run()
