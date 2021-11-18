@@ -12,7 +12,7 @@ from threading import Thread
 
 import serial
 
-from frame import Frame
+from Frame import Frame
 
 
 class SerialInterface:

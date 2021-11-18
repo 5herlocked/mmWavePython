@@ -5,7 +5,6 @@ https://forum.digikey.com/t/getting-started-with-the-ti-awr1642-mmwave-sensor/13
 Using this to establish the general structure of the Packets received from the mmWave radar chip
 """
 
-# TODO: Need to verify if this is actually how the packets end up
 import struct
 
 

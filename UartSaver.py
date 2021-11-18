@@ -11,13 +11,12 @@ import json
 from datetime import datetime
 
 # Use the correct frame format for the firmware
-from frame import Frame, ShortRangeRadarFrameHeader, FrameError
-from serial_interface import SerialInterface
+from Frame import Frame, ShortRangeRadarFrameHeader, FrameError
+from SerialInterface import SerialInterface
 
 
 def save_data():
     global frames, file_name
-
     json.dump(frames, file_name)
 
 

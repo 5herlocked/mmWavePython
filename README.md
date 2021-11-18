@@ -2,7 +2,7 @@
 
 The data saver application is specifically designed to export the data packets returned 
 by the [Out-of-Box Demo](https://dev.ti.com/tirex/explore/node?devtools=IWR6843ISK&node=ADSocWGX8FJCytCWREvHzw__VLyFKFf__LATEST)
-for the Ti IWR-6843-ISK module. The [frame.py](./frame.py) file can be manipulated to fit your specific usecase.
+for the Ti IWR-6843-ISK module. The [frame.py](./Frame.py) file can be manipulated to fit your specific usecase.
 It is recommended that you change the frame.py file whenever you modify the data return patterns of the mmWave radar.
 
 ### Commandline Options
