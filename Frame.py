@@ -4,7 +4,7 @@ https://forum.digikey.com/t/getting-started-with-the-ti-awr1642-mmwave-sensor/13
 
 Using this to establish the general structure of the Packets received from the mmWave radar chip
 """
-
+import json
 import struct
 
 
@@ -53,14 +53,6 @@ class DetectedPoints(TLVData):
 class RangeProfile(TLVData):
     NAME = 'RANGE_PROFILE'
     SIZE_BYTES = 2
-
-    def __init__(self, serial_tlv):
-        super(RangeProfile, self).__init__(serial_tlv)
-        # Unpack elements from the struct
-
-        elements = struct.unpack('<H', serial_tlv)
-        # self.
-
     pass
 
 
@@ -96,6 +88,7 @@ class Stats(TLVData):
         self.inter_chirp_margin = elements[3]
         self.active_cpu_load = elements[4]
         self.inter_frame_cpu_load = elements[5]
+
     pass
 
 
@@ -109,6 +102,7 @@ class DetectedPointsSide(TLVData):
         elements = struct.unpack('<HH', serial_tlv)
         self.snr = elements[0]
         self.noise = elements[1]
+
     pass
 
 
@@ -224,6 +218,22 @@ class ShortRangeRadarFrameHeader(FrameHeader):
         self.subFrameNumber = values[4]
 
 
+class FrameEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, Frame):
+            generatedDict = {
+                "frameNumber": obj.header.frameNumber,
+                "packetLength": obj.header.packetLength,
+                "numDetectedObj": obj.header.numDetectedObj,
+                "numTLVs": obj.header.numTLVs,
+                "subFrameNum": obj.header.subFrameNumber,
+            }
+
+            return generatedDict
+
+        return json.JSONEncoder.default(self, obj)
+
+
 class Frame:
     FRAME_START = b'\x02\x01\x04\x03\x06\x05\x08\x07'
 
@@ -261,11 +271,10 @@ class Frame:
 
     def __str__(self):
         # Print header followed by TLVs
-        result = "START FRAME\n"
+        result = ""
         result += str(self.header)
         result += 'TLVs: {\n'
         for each in self.tlvs:
             result += str(each)
         result += '}\n'
-        result += 'END FRAME\n'
         return result
