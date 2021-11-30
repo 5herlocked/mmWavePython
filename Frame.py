@@ -253,7 +253,7 @@ class Frame:
         # Second sanity check
         if frame_length < self.header.packetLength:
             raise FrameError('Frame is too small. Expected {} bytes, '
-                             'receieved {} bytes.'.format(self.header.packetLength, frame_length))
+                             'received {} bytes.'.format(self.header.packetLength, frame_length))
 
         # Convert remaining data into TLVs
         full_tlv_data = serial_frame[frame_type.SIZE_BYTES:]

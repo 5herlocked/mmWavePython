@@ -35,16 +35,6 @@ def load_data(pickle_file, plot_queue=None):
 
 
 def run_replay(pickle_file):
-    # radar_plot_queue = Queue()
-    #
-    # load_thread = Thread(target=load_data, args=[pickle_file, radar_plot_queue])
-    # load_thread.start()
-    #
-    # plot = NavPlot(radar_plot_queue)
-    # plot.show()
-    #
-    # load_thread.join()
-
     with open(pickle_file, 'rb+') as file:
         frames = pickle.load(file)
 

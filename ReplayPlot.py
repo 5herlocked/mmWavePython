@@ -16,21 +16,11 @@ class ReplayPlot(NavPlot):
 
         self.fig.canvas.mpl_connect('key_press_event', self.key_event)
 
-    def radar_plot_init(self):
-        self.radar_ax.set_title('Radar Plot')
-        self.radar_ax.set_aspect('auto')
-        self.radar_ax.set_xlabel('X (m)')
-        self.radar_ax.set_ylabel('Y (m)')
-        self.radar_ax.set_xlim(-10, 10)
-        self.radar_ax.set_ylim(0, 10)
-
     def key_event(self, e):
         if e.key == 'right':
-            print('right')
             self.prev_pos = self.curr_pos
             self.curr_pos += 1
         elif e.key == 'left':
-            print('left')
             self.prev_pos = self.curr_pos
             self.curr_pos -= 1
 

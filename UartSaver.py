@@ -46,6 +46,8 @@ def kill_all():
 
 def interrupt_handler(sig, frame):
     # Sig Int is called causing everything to shut down
+    global kill
+    kill = True
     kill_all()
     try:
         save_data()
@@ -70,7 +72,7 @@ def run_vis():
 def process_frame(plot_queue=None):
     # Open serial interface to the device
     # Specify which frame/header structure to search for
-    global interface, frames
+    global interface, frames, kill
 
     interface.start()
 
@@ -84,8 +86,7 @@ def process_frame(plot_queue=None):
                 print(line)
                 interface.send_item(interface.control_tx_queue, line)
 
-    frames = []
-    while interface.uarts_enable:
+    while not kill:
         serial_frame = interface.recv_item(interface.data_rx_queue)
         if serial_frame:
             try:
@@ -137,7 +138,9 @@ if __name__ == "__main__":
 
     if args.vis:
         compute_thread = Thread()
+        kill = False
         run_vis()
     else:
         compute_thread = None
+        kill = False
         process_frame()
