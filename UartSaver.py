@@ -130,9 +130,9 @@ if __name__ == "__main__":
     frames = list()
 
     if args.output_name is not None:
-        file_name = args.output_name + ".pickle"
+        file_name = args.output_name + ".pkl"
     else:
-        file_name = datetime.now().strftime('%Y_%m_%d-%H-%M-%S') + ".pickle"
+        file_name = datetime.now().strftime('%Y_%m_%d-%H-%M-%S') + ".pkl"
 
     signal.signal(signal.SIGINT, interrupt_handler)
 
