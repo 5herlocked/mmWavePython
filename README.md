@@ -5,11 +5,20 @@ by the [Out-of-Box Demo](https://dev.ti.com/tirex/explore/node?devtools=IWR6843I
 for the Ti IWR-6843-ISK module. The [frame.py](./Frame.py) file can be manipulated to fit your specific uses.
 It is recommended that you change the frame.py file whenever you modify the data return patterns of the mmWave radar.
 
+## Usage instructions
+Use [requirements.txt](/requirements.txt) to install the dependencies of the project. 
+
+Run the [UartSave.py](/UartSaver.py) script with the following commandline options:
+`python UartSave.py --control_port COM3 --data_port COM6 --output_name test --vis`
+to open COM3 as the control port for the mmWave radar, open COM6 as the data receiving port and save all the received
+data to a test.pkl file with the data visualiser running
+
 ### Commandline Options
 The tool has the following commandline options:
-* **-c/--control**: This argument specifies the COM port to be used to configure the mmWave device.
-* **-d/--data**: This argument specifies the COM port where we should listen for the data.
-* **-f/--file**: This argument specifies the filename of the exported file which contains all the data received.
+* **--control_port**: This argument specifies the COM port to be used to configure the mmWave device.
+* **--data_port**: This argument specifies the COM port where we should listen for the data.
+* **--output_name**: This argument specifies the filename of the exported file which contains all the data received.
+* **--vis**: This argument's presence specifies if we want to run the visualisation
 
 # mmWave Radar Data replayer
 
