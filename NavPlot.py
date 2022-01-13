@@ -12,11 +12,11 @@ class NavPlot:
 
         # Initialize plots
         self.fig = plt.figure()
-        self.radar_ax = self.fig.add_subplot(111)
+        self.radar_ax = self.fig.add_subplot(111, projection='3d')
         self.radar_plot_init()
 
         # Initialize the actual plot with empty data
-        self.obj_scatter = self.radar_ax.scatter([], [], s=60, marker='o')
+        self.obj_scatter = self.radar_ax.scatter([], [], [], s=60, marker='o')
 
         # Save results from previous update in case there is no new radar data ready, keeps plot smooth
         self.prev_artists = []
@@ -29,8 +29,10 @@ class NavPlot:
         self.radar_ax.set_aspect('auto')
         self.radar_ax.set_xlabel('X (m)')
         self.radar_ax.set_ylabel('Y (m)')
-        self.radar_ax.set_xlim(-10, 10)
-        self.radar_ax.set_ylim(0, 10)
+        self.radar_ax.set_zlabel('Z (m)')
+        self.radar_ax.set_xlim3d([-15, 15])
+        self.radar_ax.set_ylim3d([0, 15])
+        self.radar_ax.set_zlim3d([-15, 15])
 
     def update_plot(self):
         # Keep track of things that have changed for the animation
@@ -45,7 +47,7 @@ class NavPlot:
             # Process each TLV type
             if 'DETECTED_POINTS' in radar_data.keys():
                 detections = radar_data['DETECTED_POINTS']
-                self.obj_scatter.set_offsets(detections[:, 0:2])
+                self.obj_scatter.set_offsets(detections[:, 0:3])
                 modified_artists.append(self.obj_scatter)
 
         self.prev_artists = modified_artists

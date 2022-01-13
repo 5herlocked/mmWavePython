@@ -76,7 +76,7 @@ def process_frame(plot_queue=None):
 
     interface.start()
 
-    with open('profile.cfg') as f:
+    with open('profile_30deg_15m.cfg') as f:
         print("Sending Configuration...")
         for line in f.readlines():
             if line.startswith('%'):
@@ -124,10 +124,16 @@ if __name__ == "__main__":
     parser.add_argument('--data_port', help='COM port for radar data transfer')
     parser.add_argument('--output_name', help='Name of the output file')
     parser.add_argument('--vis', help='Start Visualization', action='store_true')
+    parser.add_argument('--prof', help='Radar Chirp profile to use')
     args = parser.parse_args()
     # Program Globals
     interface = SerialInterface(args.control_port, args.data_port, frame_type=ShortRangeRadarFrameHeader)
     frames = list()
+
+    if args.prof is not None:
+        profile_file = args.prof
+    else:
+        profile_file = 'profile.cfg'
 
     if args.output_name is not None:
         file_name = args.output_name + ".pkl"
