@@ -8,6 +8,8 @@ import pickle
 import signal
 import struct
 import time
+
+from Plot3d import Plot3D
 from datetime import datetime
 from multiprocessing import Queue
 # Use the correct frame format for the firmware
@@ -63,7 +65,7 @@ def run_vis():
     compute_thread = Thread(target=process_frame, args=[radar_plot_queue])
     compute_thread.start()
 
-    plot = NavPlot(radar_plot_queue)
+    plot = Plot3D(radar_plot_queue)
     plot.show()
 
     interrupt_handler(None, None)
@@ -100,11 +102,12 @@ def process_frame(plot_queue=None):
                         objs = tlv.objects
 
                         if tlv.name == 'DETECTED_POINTS':
-                            tuples = [(float(obj.x), float(obj.y)) for obj in objs]
+                            tuples = [(float(obj.x), float(obj.y), float(obj.z)) for obj in objs]
                             coords = np.array(tuples)
                             result['DETECTED_POINTS'] = coords
 
                     plot_queue.put(result)
+                    print('new data')
 
             except (KeyError, struct.error, IndexError, FrameError, OverflowError) as e:
                 # Some data got in the wrong place, just skip the frame

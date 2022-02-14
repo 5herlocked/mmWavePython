@@ -4,6 +4,7 @@ https://forum.digikey.com/t/getting-started-with-the-ti-awr1642-mmwave-sensor/13
 
 Using this to establish the general structure of the Packets received from the mmWave radar chip
 """
+import datetime
 import json
 import struct
 
@@ -21,12 +22,6 @@ class TLVData:
     def preparsing(serial_tlv):
         # Only used if there is extra data in a frame outside of the regular objects
         return None, serial_tlv
-
-    def __str__(self):
-        result = ''
-        for key in self.__dict__.keys():
-            result += '{}: {}\n'.format(key, self.__dict__[key])
-        return result
 
 
 class DataObjDescriptor:
@@ -140,12 +135,6 @@ class TLVHeader:
         self.type = elements[0]
         self.length = elements[1]
 
-    def __str__(self):
-        result = 'TLV Header:\n'
-        for key in self.__dict__.keys():
-            result += '{}: {}\n'.format(key, self.__dict__[key])
-        return result
-
 
 class TLV:
     def __init__(self, serial_tlv):
@@ -167,12 +156,6 @@ class TLV:
             print('Exception while parsing TLV objects: ', e)
             self.objects = []
 
-    def __str__(self):
-        result = str(self.header) + 'Name: {}\n'.format(self.name)
-        for each in self.objects:
-            result += str(each)
-        return result
-
     def parse_objects(self, serial_tlv):
         objects = []
         num_objects = int(self.header.length / self.obj_size)
@@ -187,13 +170,6 @@ class TLV:
 class FrameHeader:
     def __init__(self, serial_header):
         self.full_header = serial_header
-
-    def __str__(self):
-        result = 'Frame Header:\n'
-        for key in self.__dict__.keys():
-            result += '{}: {}\n'.format(key, self.__dict__[key])
-
-        return result
 
     def verify_checksum(self):
         pass
@@ -218,28 +194,14 @@ class ShortRangeRadarFrameHeader(FrameHeader):
         self.subFrameNumber = values[4]
 
 
-class FrameEncoder(json.JSONEncoder):
-    def default(self, obj):
-        if isinstance(obj, Frame):
-            generatedDict = {
-                "frameNumber": obj.header.frameNumber,
-                "packetLength": obj.header.packetLength,
-                "numDetectedObj": obj.header.numDetectedObj,
-                "numTLVs": obj.header.numTLVs,
-                "subFrameNum": obj.header.subFrameNumber,
-            }
-
-            return generatedDict
-
-        return json.JSONEncoder.default(self, obj)
-
-
 class Frame:
     FRAME_START = b'\x02\x01\x04\x03\x06\x05\x08\x07'
 
     def __init__(self, serial_frame, frame_type):
         # Parse serial data into header and TLVs
         # Note that frames are LITTLE ENDIAN
+
+        self.time = datetime.datetime.now()
 
         # Length should be > header_size
         frame_length = len(serial_frame)
@@ -268,13 +230,3 @@ class Frame:
 
             # Slice off the consumed TLV data
             tlv_data = tlv_data[length:]
-
-    def __str__(self):
-        # Print header followed by TLVs
-        result = ""
-        result += str(self.header)
-        result += 'TLVs: {\n'
-        for each in self.tlvs:
-            result += str(each)
-        result += '}\n'
-        return result

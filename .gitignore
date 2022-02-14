@@ -11,6 +11,8 @@
 
 # mmWave radar stores
 *.pickle
+*.pkl
+*.csv
 
 # Generated files
 .idea/**/contentModel.xml

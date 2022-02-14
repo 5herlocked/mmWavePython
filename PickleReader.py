@@ -26,7 +26,7 @@ def load_data(pickle_file, plot_queue=None):
             objs = tlv.objects
 
             if tlv.name == 'DETECTED_POINTS':
-                tuples = [(float(obj.x), float(obj.y)) for obj in objs]
+                tuples = [(float(obj.x), float(obj.y), float(obj.z)) for obj in objs]
                 coords = np.array(tuples)
                 result['DETECTED_POINTS'] = coords
 
