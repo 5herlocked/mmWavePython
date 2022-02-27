@@ -41,6 +41,7 @@ def run_replay(pickle_file):
 
     plot = PlotWPlotly(frames)
     plot.show()
+    input("Press Enter to quit...")
 
 
 if __name__ == '__main__':

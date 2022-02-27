@@ -21,9 +21,20 @@ class PlotWPlotly:
             pad={"t": 50},
             steps=steps
         )]
+        scene = dict(
+            xaxis = dict(range=[-10, 10]),
+            yaxis = dict(range=[-10, 10]),
+            zaxis = dict(range=[-10, 10])
+        )
+
+        camera = dict(
+            center=dict(x=10, y=10, z=10),
+            eye=dict(x=0, y=0, z=0),
+        )
 
         self.fig.data[0].visible = True
-        self.fig.update_layout(sliders=sliders)
+        self.fig.update_layout(scene=scene,
+                               scene_camera=camera, sliders=sliders)
 
     def get_traces(self, frames):
         for frame, i in zip(frames, range(1, len(frames))):
