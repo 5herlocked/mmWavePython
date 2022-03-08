@@ -56,7 +56,7 @@ def process_frame(plot_queue=None):
 
     interface.start()
 
-    with open('profile_30deg_15m.cfg') as f:
+    with open(profile_file) as f:
         print("Sending Configuration...")
         for line in f.readlines():
             if line.startswith('%'):
@@ -82,6 +82,15 @@ def process_frame(plot_queue=None):
                         if tlv.name == 'DETECTED_POINTS':
                             tuples = [(float(obj.x), float(obj.y), float(obj.z)) for obj in objs]
                             coords = np.array(tuples)
+
+                            # If there are objects moving towards the radar chip
+                            # with a speed less than -x m/s
+                            for obj in objs:
+                                # counteract this when we have IMU data: IMU detected vel - doppler vel
+                                if obj.speed <= -1:
+                                    # announce the object
+                                    print("There is an object moving towards you with speed: " + obj.speed)
+
                             result['DETECTED_POINTS'] = coords
 
                     plot_queue.put(result)
