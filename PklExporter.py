@@ -10,7 +10,7 @@ def export_data(pickle_file, csv_file):
     with open(csv_file, 'x+', newline='\n') as csvFile:
         writer = csv.writer(csvFile)
         # write the header
-        writer.writerow(['time_instant', 'frame_number', 'object_number', 'x', 'y', 'z', 'doppler'])
+        writer.writerow(['time_instant', 'frame_number', 'object_number', 'x (m)', 'y (m)', 'z (m)', 'doppler (m/s)'])
 
         counter = 1
         for frame in frames:

@@ -10,6 +10,7 @@
 .idea/**/shelf
 
 # mmWave radar stores
+data/
 *.pickle
 *.pkl
 *.csv

@@ -9,16 +9,12 @@ import signal
 import struct
 import time
 
-from Plot3d import Plot3D
 from datetime import datetime
-from multiprocessing import Queue
 # Use the correct frame format for the firmware
-from threading import Thread
 
 import numpy as np
 
 from Frame import Frame, ShortRangeRadarFrameHeader, FrameError
-from NavPlot import NavPlot
 from SerialInterface import SerialInterface
 
 
@@ -36,10 +32,6 @@ def save_data():
 
 
 def kill_all():
-    global compute_thread
-    if compute_thread is not None:
-        compute_thread.join()
-
     print("Shutting down...")
     interface.send_item(interface.control_tx_queue, 'sensorStop\n')
     time.sleep(2)
@@ -55,20 +47,6 @@ def interrupt_handler(sig, frame):
         save_data()
     except Exception as e:
         print(e)
-
-
-def run_vis():
-    global compute_thread
-
-    radar_plot_queue = Queue()
-
-    compute_thread = Thread(target=process_frame, args=[radar_plot_queue])
-    compute_thread.start()
-
-    plot = Plot3D(radar_plot_queue)
-    plot.show()
-
-    interrupt_handler(None, None)
 
 
 def process_frame(plot_queue=None):
@@ -107,7 +85,6 @@ def process_frame(plot_queue=None):
                             result['DETECTED_POINTS'] = coords
 
                     plot_queue.put(result)
-                    print('new data')
 
             except (KeyError, struct.error, IndexError, FrameError, OverflowError) as e:
                 # Some data got in the wrong place, just skip the frame
@@ -144,12 +121,5 @@ if __name__ == "__main__":
         file_name = datetime.now().strftime('%Y_%m_%d-%H-%M-%S') + ".pkl"
 
     signal.signal(signal.SIGINT, interrupt_handler)
-
-    if args.vis:
-        compute_thread = Thread()
-        kill = False
-        run_vis()
-    else:
-        compute_thread = None
-        kill = False
-        process_frame()
+    kill = False
+    process_frame()

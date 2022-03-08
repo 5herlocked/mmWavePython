@@ -24,7 +24,7 @@ class PlotWPlotly:
         scene = dict(
             xaxis = dict(range=[-10, 10]),
             yaxis = dict(range=[-10, 10]),
-            zaxis = dict(range=[-10, 10])
+            zaxis = dict(range=[-2, 10])
         )
 
         camera = dict(
