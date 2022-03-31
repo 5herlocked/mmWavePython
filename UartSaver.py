@@ -10,12 +10,26 @@ import struct
 import time
 
 from datetime import datetime
+from queue import PriorityQueue
 # Use the correct frame format for the firmware
 
 import numpy as np
 
 from Frame import Frame, ShortRangeRadarFrameHeader, FrameError
 from SerialInterface import SerialInterface
+
+
+class DualPriorityQueue(PriorityQueue):
+    def __init__(self, maxPQ=False):
+        PriorityQueue.__init__(self)
+        self.reverse = -1 if maxPQ else 1
+
+    def put(self, priority, data):
+        PriorityQueue.put(self, (self.reverse * priority, data))
+
+    def get(self, *args, **kwargs):
+        priority, data = PriorityQueue.get(self, *args, **kwargs)
+        return self.reverse * priority, data
 
 
 def save_data():
@@ -47,6 +61,27 @@ def interrupt_handler(sig, frame):
         save_data()
     except Exception as e:
         print(e)
+
+
+def get_priority(obj):
+    # y is away from the chip
+    # doppler returns the speed wrt the chip approaching the module
+    # use y = 1/x to define danger of object as it approaches user.
+
+    # reduce priority if obj.speed is +ve (away from radar)
+    return (1/obj.x) + (1/obj.y) + (1/obj.z) + (-1 * obj.speed)
+
+
+def announce(most_pressing):
+    # abs_x = abs(most_pressing.x)
+    # abs_y = abs(most_pressing.y)
+    # abs_z = abs(most_pressing.z)
+
+    distance = "really close" if most_pressing.y <= 1 else "close"
+    orientation = "left" if most_pressing.x < 0 else "right"
+
+    print("There is an object " + distance + " to your " + orientation)
+    pass
 
 
 def process_frame(plot_queue=None):
@@ -83,13 +118,22 @@ def process_frame(plot_queue=None):
                             tuples = [(float(obj.x), float(obj.y), float(obj.z)) for obj in objs]
                             coords = np.array(tuples)
 
+                            obj_priorities = DualPriorityQueue(True)
+                            for obj in objs:
+                                obj_priority = get_priority(obj)
+                                obj_priorities.put(obj_priority, obj)
+
                             # If there are objects moving towards the radar chip
                             # with a speed less than -x m/s
-                            for obj in objs:
-                                # counteract this when we have IMU data: IMU detected vel - doppler vel
-                                if obj.speed <= -1:
-                                    # announce the object
-                                    print("There is an object moving towards you with speed: " + obj.speed)
+
+                            most_pressing = obj_priorities.get()
+                            announce(most_pressing)
+                            # for obj in objs:
+                            #     #  counteract this when we have IMU data: IMU detected vel - doppler vel
+                            #
+                            #       if obj.speed <= -1:
+                            #         # announce the object
+                            #         print("There is an object moving towards you with speed: " + obj.speed)
 
                             result['DETECTED_POINTS'] = coords
 
