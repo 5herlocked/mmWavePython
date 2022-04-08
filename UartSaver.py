@@ -69,7 +69,15 @@ def get_priority(obj):
     # use y = 1/x to define danger of object as it approaches user.
 
     # reduce priority if obj.speed is +ve (away from radar)
-    return (1/obj.x) + (1/obj.y) + (1/obj.z) + (-1 * obj.speed)
+    priority_x = 0 if obj.x == 0 else (1/abs(obj.x))
+    priority_y = 0 if obj.y == 0 else (1/abs(obj.y))
+    priority_z = 0 if obj.z == 0 else (1/abs(obj.z))
+
+    # compensate for the fact that doppler is defined as vel of obj moving towards
+    # sensor
+    priority_speed = -1 * obj.doppler
+
+    return priority_x + priority_y + priority_z + priority_speed
 
 
 def announce(most_pressing):
@@ -123,17 +131,8 @@ def process_frame(plot_queue=None):
                                 obj_priority = get_priority(obj)
                                 obj_priorities.put(obj_priority, obj)
 
-                            # If there are objects moving towards the radar chip
-                            # with a speed less than -x m/s
-
                             most_pressing = obj_priorities.get()
-                            announce(most_pressing)
-                            # for obj in objs:
-                            #     #  counteract this when we have IMU data: IMU detected vel - doppler vel
-                            #
-                            #       if obj.speed <= -1:
-                            #         # announce the object
-                            #         print("There is an object moving towards you with speed: " + obj.speed)
+                            announce(most_pressing[1])
 
                             result['DETECTED_POINTS'] = coords
 
