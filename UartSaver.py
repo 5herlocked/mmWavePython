@@ -86,10 +86,27 @@ def announce(most_pressing):
     # abs_z = abs(most_pressing.z)
 
     distance = "really close" if most_pressing.y <= 1 else "close"
-    orientation = "left" if most_pressing.x < 0 else "right"
+    if most_pressing.x == 0:
+        orientation = "ahead"
+    elif most_pressing.x < 0:
+        orientation = "to your left"
+    else:
+        orientation = "to your right"
 
-    print("There is an object " + distance + " to your " + orientation)
-    pass
+    if most_pressing.doppler < 0:
+        moving = "away from"
+    else:
+        moving = "towards"
+
+    if abs(most_pressing.doppler) < 1:
+        moving_speed = "slowly"
+    else:
+        moving_speed = "quickly"
+
+    print("There is an object "
+          + distance + " " + orientation +
+          " and moving " + moving + " you, " + moving_speed
+          )
 
 
 def process_frame(plot_queue=None):
@@ -131,8 +148,9 @@ def process_frame(plot_queue=None):
                                 obj_priority = get_priority(obj)
                                 obj_priorities.put(obj_priority, obj)
 
-                            most_pressing = obj_priorities.get()
-                            announce(most_pressing[1])
+                            most_pressing_priority, most_pressing_obj = obj_priorities.get()
+                            announce(most_pressing_obj)
+                            print(most_pressing_priority)
 
                             result['DETECTED_POINTS'] = coords
 
