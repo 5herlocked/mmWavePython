@@ -8,16 +8,13 @@ import pickle
 import signal
 import struct
 import time
-
 from datetime import datetime
 from queue import PriorityQueue
-# Use the correct frame format for the firmware
 
 import numpy as np
 
 from Frame import Frame, ShortRangeRadarFrameHeader, FrameError
 from SerialInterface import SerialInterface
-
 
 class DualPriorityQueue(PriorityQueue):
     def __init__(self, maxPQ=False):
@@ -69,9 +66,9 @@ def get_priority(obj):
     # use y = 1/x to define danger of object as it approaches user.
 
     # reduce priority if obj.speed is +ve (away from radar)
-    priority_x = 0 if obj.x == 0 else (1/abs(obj.x))
-    priority_y = 0 if obj.y == 0 else (1/abs(obj.y))
-    priority_z = 0 if obj.z == 0 else (1/abs(obj.z))
+    priority_x = 0 if obj.x == 0 else (1 / abs(obj.x))
+    priority_y = 0 if obj.y == 0 else (1 / abs(obj.y))
+    priority_z = 0 if obj.z == 0 else (1 / abs(obj.z))
 
     # compensate for the fact that doppler is defined as vel of obj moving towards
     # sensor
@@ -81,10 +78,6 @@ def get_priority(obj):
 
 
 def announce(most_pressing):
-    # abs_x = abs(most_pressing.x)
-    # abs_y = abs(most_pressing.y)
-    # abs_z = abs(most_pressing.z)
-
     distance = "really close" if most_pressing.y <= 1 else "close"
     if most_pressing.x == 0:
         orientation = "ahead"
@@ -103,13 +96,10 @@ def announce(most_pressing):
     else:
         moving_speed = "quickly"
 
-    print("There is an object "
-          + distance + " " + orientation +
-          " and moving " + moving + " you, " + moving_speed
-          )
+    return "There is an object " + distance + " " + orientation + " and moving " + moving + " you, " + moving_speed
 
 
-def process_frame(plot_queue=None):
+def process_frame():
     # Open serial interface to the device
     # Specify which frame/header structure to search for
     global interface, frames, kill
@@ -117,13 +107,13 @@ def process_frame(plot_queue=None):
     interface.start()
 
     with open(profile_file) as f:
-        print("Sending Configuration...")
+        # print("Sending Configuration...")
         for line in f.readlines():
             if line.startswith('%'):
                 # ignore comments
                 continue
             else:
-                print(line)
+                # print(line)
                 interface.send_item(interface.control_tx_queue, line)
 
     while not kill:
@@ -133,37 +123,31 @@ def process_frame(plot_queue=None):
                 frame = Frame(serial_frame, frame_type=interface.frame_type)
                 frames.append(frame)
 
-                if plot_queue is not None:
-                    result = dict()
+                for tlv in frame.tlvs:
+                    objs = tlv.objects
 
-                    for tlv in frame.tlvs:
-                        objs = tlv.objects
+                    if tlv.name == 'DETECTED_POINTS':
+                        tuples = [(float(obj.x), float(obj.y), float(obj.z)) for obj in objs]
+                        coords = np.array(tuples)
 
-                        if tlv.name == 'DETECTED_POINTS':
-                            tuples = [(float(obj.x), float(obj.y), float(obj.z)) for obj in objs]
-                            coords = np.array(tuples)
+                        obj_priorities = DualPriorityQueue(True)
+                        for obj in objs:
+                            obj_priority = get_priority(obj)
+                            obj_priorities.put(obj_priority, obj)
 
-                            obj_priorities = DualPriorityQueue(True)
-                            for obj in objs:
-                                obj_priority = get_priority(obj)
-                                obj_priorities.put(obj_priority, obj)
-
-                            most_pressing_priority, most_pressing_obj = obj_priorities.get()
-                            announce(most_pressing_obj)
-                            print(most_pressing_priority)
-
-                            result['DETECTED_POINTS'] = coords
-
-                    plot_queue.put(result)
+                        most_pressing_priority, most_pressing_obj = obj_priorities.get()
+                        print(announce(most_pressing_obj), flush=True)
+                        # print(most_pressing_obj)
+                        # print(most_pressing_priority)
 
             except (KeyError, struct.error, IndexError, FrameError, OverflowError) as e:
                 # Some data got in the wrong place, just skip the frame
                 print('Exception occurred: ', e)
                 print("Skipping frame due to error...")
 
-        # Sleep to allow other threads to run
-        time.sleep(0.001)
 
+# Sleep to allow other threads to run
+time.sleep(0.001)
 
 if __name__ == "__main__":
     import argparse

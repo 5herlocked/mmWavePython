@@ -44,6 +44,9 @@ class DetectedPoints(TLVData):
         self.z = elements[2]
         self.doppler = elements[3]
 
+    def __str__(self):
+        return "X: " + str(self.x) + "\tY: " + str(self.y) + "\tZ: " + str(self.z) + "\tSpeed: " + str(self.doppler)
+
 
 class RangeProfile(TLVData):
     NAME = 'RANGE_PROFILE'
