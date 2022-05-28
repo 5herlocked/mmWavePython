@@ -16,6 +16,7 @@ import numpy as np
 from Frame import Frame, ShortRangeRadarFrameHeader, FrameError
 from SerialInterface import SerialInterface
 
+
 class DualPriorityQueue(PriorityQueue):
     def __init__(self, maxPQ=False):
         PriorityQueue.__init__(self)

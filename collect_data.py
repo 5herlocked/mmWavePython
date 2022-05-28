@@ -20,3 +20,8 @@
 #   Camera Reader class: launch/open_camera() | process_frame() | close_camera()
 #           save_frame()
 
+
+import threading
+import SerialReader
+import CameraReader
+
