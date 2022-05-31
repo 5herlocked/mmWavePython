@@ -145,10 +145,9 @@ def process_frame():
                 # Some data got in the wrong place, just skip the frame
                 print('Exception occurred: ', e)
                 print("Skipping frame due to error...")
+    # Sleep to allow other threads to run
+    time.sleep(0.001)
 
-
-# Sleep to allow other threads to run
-time.sleep(0.001)
 
 if __name__ == "__main__":
     import argparse
