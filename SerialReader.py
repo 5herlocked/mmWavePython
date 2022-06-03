@@ -1,8 +1,8 @@
 import csv
 import struct
-from datetime import datetime
 
 from Frame import ShortRangeRadarFrameHeader, Frame, FrameError
+from datetime import datetime
 from threading import Thread
 from multiprocessing import Queue
 from SerialInterface import SerialInterface
