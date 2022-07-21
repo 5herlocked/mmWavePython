@@ -6,7 +6,7 @@
 
 # pseudocode
 # on launch
-#   open serial interface + open camera interface in TWO seperate threads
+#   open serial interface + open camera interface in TWO separate threads
 #   BUT do NOT start recording
 # on gpio rising edge:
 #   start serial recording
@@ -19,35 +19,31 @@
 #           save_frame()
 #   Camera Reader class: launch/open_camera() | process_frame() | close_camera()
 #           save_frame()
+import signal
+import time
+
+from SerialReader import SerialReader
+from CameraReader import CameraReader
 
 
-from threading import Thread
-import SerialReader
-import CameraReader
+def interrupt_handler(sig, frame):
+    global kill
+    kill = True
+    stop_watching()
 
 
-def open_files():
-    pass
+def stop_watching():
+    camera.stop()
+    serial.stop()
 
 
-def watch_camera():
-    with open('' + args.output_name + '.mp4', mode='wb+') as vid:
-        # Create an instance of CameraReader and pass the file to it
-        pass
+def start_watching():
+    global kill
+    camera.start()
+    serial.start()
 
-    pass
-
-
-def watch_serial():
-    with open('' + args.output_name + '.csv', mode='w+') as csv:
-        # Create an instance of SerialReader and pass the file to it
-        pass
-    pass
-
-
-async def watch():
-    camera_thread = Thread(target=watch_camera)
-    serial_thread = Thread(target=watch_serial)
+    while not kill:
+        time.sleep(0.5)
 
 
 if __name__ == '__main__':
@@ -61,4 +57,11 @@ if __name__ == '__main__':
     parser.add_argument('--prof', help='Radar Chirp profile to use')
     args = parser.parse_args()
 
-    await watch()
+    kill = False
+
+    signal.signal(signal.SIGINT, interrupt_handler)
+
+    camera = CameraReader(args.output_name + '.mp4')
+    serial = SerialReader(args.output_name + '.csv', args.control_port, args.data_port)
+
+    start_watching()
