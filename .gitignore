@@ -9,12 +9,6 @@
 .idea/**/dictionaries
 .idea/**/shelf
 
-# mmWave radar stores
-data/
-*.pickle
-*.pkl
-*.csv
-
 # Generated files
 .idea/**/contentModel.xml
 
